@@ -24,4 +24,21 @@ class CommentModel
         }
         return $data;
     }
+
+
+    public function blogComments($blogId, $admin = false)
+    {
+        $key = cachekey(__FUNCTION__, $blogId);
+        $data = $this->redis->hget(__CLASS__, $key);
+
+        if (is_bool($data) || $admin) {
+            if ($admin) {
+                $where = "replyid <= 0 and";
+            }
+            $sql = "select * from comment where {$where} blogid = ".$blogId;
+            $data = $this->db->getAll($sql);
+            $this->redis->hset(__CLASS__, $key, $data);
+        }
+        return $data;
+    }
 }

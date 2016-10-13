@@ -2,80 +2,92 @@
 
 class Db
 {
-    private $time;
-    private $is_log;   //是否记录日志
-    private $handle;
-    private $link;     //mmysqli资源句柄
-    private $trans;   //事务
+    private $link;   //连接标识符
+    private $PDOStatement;  //保存PDOStatement对象
+    private $lastInsertId;
+    private $trans;   //事务管理
 
-    public function __construct($db_config)
+    public function __construct($dbConfig)
     {
-        $this->time = $this->microtime();
-        $this->connect($db_config['hostname'], $db_config['username'], $db_config['password'], $db_config['database']);
-        $this->is_log = $db_config['log'];
-        if ($this->is_log) {
-            $handle = fopen($db_config['logfilepath'] . "dblog.txt", "a+");
-            $this->handle = $handle;
+        $this->PDOStatement = null;
+        if (!class_exists("PDO")) {
+            $this->halt('不支持PDO,请先开启');
         }
+        $this->connect($dbConfig['hostname'], $dbConfig['username'], $dbConfig['password'], $dbConfig['database']);
     }
 
 
-    //数据库连接
-    public function connect($dbhost, $dbuser, $dbpw, $dbname, $charset = "utf8")
+    /*
+     * 数据库连接
+     */
+    public function connect($dbhost, $dbuser, $dbpw, $dbname, $pconnect = false)
     {
-        $this->link = @mysqli_connect($dbhost, $dbuser, $dbpw, $dbname);
-        if ($this->link) {
-            $this->halt("数据库连接失败：".mysqli_connect_errno());
+        $dns = "mysql:host=".$dbhost.";"."dnname=".$dbname;
+
+        try {
+            if ($pconnect) {
+                $this->link = new PDO($dns, $dbuser, $dbpw, [PDO::ATTR_PERSISTENT => true]);
+            } else {
+                $this->link = new PDO($dns, $dbuser, $dbpw);
+            }
+
+        } catch (PDOException $e) {
+            $this->halt("数据库连接失败:".$e->getMessage());
         }
 
-        if (!@mysqli_select_db($this->link, $dbname)) {
-            $this->halt('数据库选择失败');
+        if (!$this->link) {
+            $this->halt("PDO连接错误");
+            return false;
         }
-        mysql_query($this->link, "set names".$charset);
+        $this->link->exec("set names uft8");
+
     }
 
-    //查询
     public function query($sql)
     {
-        $this->writeLog("查询" . $sql);
-        $query = mysqli_query($this->link, $sql);
-        if (!$query) {
-            if ($this->trans) {
-                $this->transRollBack();
-            }
-            $this->halt("Query Error:" . $sql);
+        $link = $this->link;
+        if (!$link) {
+            return false;
         }
-        return $query;
+        //判断是否有结果集,如果有的话就释放
+        if (!empty($this->PDOStatement)) {
+            $this->PDOStatement = null;
+        }
+        $this->PDOStatement = $link->prepare($sql);
+        $res = $this->PDOStatement->execute();
+        return $res;
     }
 
-    //获取一条记录
-    //$fields 字段名
-    public function getOne($sql, $fields = "")
+    /*
+     * 获取所有记录
+     */
+    public function getAll($sql = null)
     {
-        $query = $this->query($sql. 'LIMIT 1');
-        $res = mysqli_fetch_assoc($query);
-        $this->writeLog("获取一条记录");
+        if ($sql != null) {
+            $this->query($sql);
+        }
+        $res =$this->PDOStatement->fetchAll(PDO::FETCH_ASSOC);
+        return $res;
+    }
+
+    /*
+     * 获取一条记录
+     */
+    public function getOne($sql = null, $fields ='')
+    {
+        if ($sql != null) {
+            $this->query($sql.'limit 1');
+        }
+        $res = $this->PDOStatement->fetch(PDO::FETCH_ASSOC);
         if ($fields && array_key_exists($fields, $res)) {
             $res = $res[$fields];
         }
         return $res;
     }
 
-    //获取全部记录
-    public function getAll($sql, $resType = MYSQL_ASSOC)
-    {
-        $query = $this->query($sql);
-        $i = 0;
-        $res = [];
-        while ($row = mysqli_fetch_array($query, $resType)) {
-            $res[$i] = $row;
-            $i++;
-        }
-        $this->writeLog("获取全部记录");
-        return $res;
-    }
-
-    //插入数据
+    /*
+     * 插入记录
+     */
     public function insert($table, $data)
     {
         $field = '';
@@ -90,15 +102,13 @@ class Db
         }
         $field = substr($field, 0, -1);
         $value = substr($value, 0, -1);
-        $sql = "insert into $table($field) values($value)";
-        $this->writeLog("插入");
-        if (!$this->query($sql)) {
-            return false;
-        }
-        return true;
+        $sql = "insert into {$table} ($field) values($value)";
+        return $this->execute($sql);
     }
 
-    //更新数据
+    /*
+     * 更新操作
+     */
     public function update($table, $data, $condition = "")
     {
         if (!is_array($data) || empty($data)) {
@@ -118,99 +128,89 @@ class Db
         }
         $value = substr($value, 0, -1);
         $sql = "update {$table} set {$value} where 1=1 and $condition";
-        $this->writeLog("更新");
-        if (!$this->query($sql)) {
-            return false;
-        }
-        return true;
+        return $this->execute($sql);
     }
 
-    //删除数据
     public function delete($table, $condition = '')
     {
         if (empty($condition)) {
-            $this->halt("每一设置删除条件");
+            $this->halt("没有设置删除条件");
             return false;
         }
         $sql = "delete from {$table} where 1=1 and $condition";
-        $this->writeLog("删除". $sql);
-        if (!$this->query($sql)) {
+        return $this->execute($sql);
+    }
+
+
+    public function getLastInsertId()
+    {
+        $link = $this->link();
+        if (!$link) {
             return false;
         }
-        return true;
+        return $link->lastInsertId();
     }
 
-    //获取记录条数
-    public function countRows($res)
+
+    /*
+     * 执行增删改操作,返回受影响的记录条数
+     */
+    public function execute($sql)
     {
-        if (!is_bool($res)) {
-            $num = mysqli_num_rows($res);
-            $this->writeLog("获取的记录条数为". $num);
-            return $num;
-        } else {
-            return 0;
+        $link = $this->link;
+        if (!$link) {
+            return false;
         }
+
+        if (!empty($this->PDOStatement)) {
+            $this->PDOStatement = null;
+        }
+        $res = $link->exec($sql);
+        if ($res) {
+            $this->lastInsertId = $link->lastInsertId();
+            return $res;
+        } else {
+            return false;
+        }
+
     }
 
-    //获取最后一条插入的id
-    public function getInsertId()
-    {
-        $id = mysqli_insert_id($this->link);
-        $this->writeLog("最后插入的id为".$id);
-        return $id;
-    }
-
-    //错误提示
-    public function halt($msg = '')
-    {
-        $msg .= "\r\n" . mysqlo_errno($this->link);
-        $this->writeLog($msg);
-        die($msg);
-    }
 
     //开启事务
     public function transStart()
     {
-        $this->writeLog("开启事务");
         $this->trans = TRUE;
-        mysqli_autocommit($this->link, FALSE);
+        $this->link->beginTransaction();
     }
 
     //事务回滚
     public function transRollBack()
     {
-        $this->writeLog("事务回滚");
-        mysqli_rollback($this->link);
-        mysqli_autocommit($this->link, TRUE);
+        $this->link->rollBack();
         $this->trans = FALSE;
     }
 
     //事务结束
     public function transFinish()
     {
-        $this->writeLog("提交事务");
-        mysqli_commit($this->link);
-        mysqli_autocommit($this->link, TRUE);
+        $this->link->commit();
         $this->trans = FALSE;
     }
 
-
-    //关闭数据库
+    /*
+     * 关闭数据库连接
+     */
     public function close()
     {
-        $this->writeLog("已关闭数据库连接");
-        return @mysqli_close($this->link);
+        return $this->link = null;
     }
 
-
-
-    //写入日志文件
-    public function writeLog($msg = '')
+    /**
+     * 自定义错误提示
+     */
+    public function halt($msg = '')
     {
-        if ($this->is_log) {
-            $text = date("Y-m-d H:i:s") . " " . $msg . "\r\n";
-            fwrite($this->handle, $text);
-        }
+        $msg .= "\r\n" . $this->link->errorCode();
+        die($msg);
     }
-
 }

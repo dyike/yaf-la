@@ -19,7 +19,7 @@ class LoginController extends Yaf_Controller_Abstract
 
     public function indexAction()
     {
-
+        echo 111;
     }
 
     public function loginAction()

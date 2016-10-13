@@ -9,6 +9,7 @@ class BlogModel
     {
         $this->db = Yaf_Registry::get('db');
         $this->redis = Yaf_Registry::get('redis');
+
     }
 
 
@@ -106,12 +107,27 @@ class BlogModel
     public function getLook($blogId)
     {
         $key = cachekey($blogId);
-        $data = $this->redis->hget('bloglook', $key);
+        $data = $this->redis->hget("bloglook", $key);
 
         if (is_bool($data)) {
             $data = 0;
             $this->redis->hset("bloglook", $key, $data);
         }
         return $data;
+    }
+
+    public function setLook($blogId)
+    {
+        $key = cachekey($blogId);
+        $data = $this->redis->hget("bloglook", $key);
+        if (is_bool($data)) {
+            $data = 1;
+            $this->redis->hset("bloglook", $key, $data);
+        } else {
+            $this->redis->hset("bloglool", $key, $data + 1);
+            if (($data + 1)%10 == 0) {
+                $this->db->update("blog", ['look' => "look+10"], 'id = '.$blogId);
+            }
+        }
     }
 }

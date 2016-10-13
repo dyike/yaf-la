@@ -34,7 +34,7 @@ class TagModel
             foreach ($res as $value) {
                 $data[$value['tagid']] = $this->tagName($value['tagid']);
             }
-            $this->redis->hset(__CLASS__, $key, $value);
+            $this->redis->hset(__CLASS__, $key, $data);
         }
 
         return $data;

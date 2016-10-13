@@ -13,14 +13,14 @@ class Rdb
 
     public function __destruct()
     {
-        $this>close();
+        $this->close();
     }
 
     /**
      * 使用长连接,但不会主动关闭
      * @param $config
      */
-    private function connect($config)
+    public function connect($config)
     {
         if (!isset($config['port'])) {
             $config['port'] = 6379;

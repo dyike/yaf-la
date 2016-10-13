@@ -11,7 +11,7 @@ class BlogTypeModel
 
     public function getChildByParent($typeId)
     {
-        $res = $this->allTypes();
+        $res = $this->allType();
         $childs = '';
         if (array_key_exists($typeId, $res)) {
             if (array_key_exists('child', $res[$typeId])) {
@@ -31,7 +31,7 @@ class BlogTypeModel
     {
         $key = cachekey(__FUNCTION__);
         $data = $this->redis->hget(__CLASS__, $key);
-        if (is_bool($data)) {
+        if (empty($data)) {
             $sql = "select * from blogtype";
             $res = $this->db->getAll($sql);
             $data = [];
