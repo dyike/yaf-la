@@ -68,4 +68,34 @@ class TagModel
         }
         return $data;
     }
+
+
+    /*
+     * 获取文章的标签
+     */
+    public function blogToTags($blogId, $admin = false)
+    {
+        $key = cachekey(__FUNCTION__, $blogId);
+        $data = $this->redis->hget(__CLASS__, $key);
+        if (is_bool($data) || $admin) {
+            $sql = "select tagid from blogtag where blogid = {$blogId}";
+            $arr = $this->db->getAll($sql);
+            foreach ($arr as $val) {
+                $sql = "select * from tag where id = {$val['tagid']}";
+                $row = $this->db->getOne($sql);
+                if ($admin) {
+                    $tags = '';
+                    $tags .= $row['name'].',';
+                } else {
+                    $tags[] = $row;
+                }
+            }
+            if ($admin && $tags) {
+                $tags = substr($tags, 0, -1);
+            }
+            $data = $tags;
+            $this->redis->hset(__CLASS__, $key, $data);
+        }
+        return $data;
+    }
 }
