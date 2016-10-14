@@ -66,52 +66,18 @@ class IndexController extends Yaf_Controller_Abstract
         $this->getView()->assign("page", $pageHtml);
     }
 
-    /*
-     * 关于我
-     */
-    public function aboutAction()
-    {
-        $blog = $this->blogModel->blogInfo(1);
-        $commentList = $this->commentModel->blogComments(1);
-        $arr = [];
-        foreach ($commentList as $value) {
-            if ($value['replyid'] <= 0) {
-                $arr[$value['id']] = $value;
-            } else {
-                $arr[$value['replyid']]['reply'][] = $value;
-            }
-        }
-
-        $this->blogModel->setLook(1);
-        $blogType = $this->blogTypeModel->getblogType($blog['type']);
-        $blogTag = $this->tagModel->blogToTags(1);
-        $commentNums = $this->commentModel->countComment(1);
-        $blog['look'] = $blog['look'] + $this->blogModel->getLook(1);
-        $this->rightPublic();
-
-        $this->getView()->assign("commentNums", $commentNums);
-        $this->getView()->assign("blogType", $blogType);
-        $this->getView()->assign("blogTag", $blogTag);
-        $this->getView()->assign("comments", $arr);
-        $this->getView()->assign("blog", $blog);
-        $this->display('info');
-        return false;
-
-    }
-
 
     public function rightPublic()
     {
         $types = $this->blogTypeModel->allType();
         $tags = $this->tagModel->hotTags(10);
         $links = $this->linkModel->linkList();
-        if (1) {
+        if (getLoginStatus()) {
             $this->getView()->assign('admin', true);
         }
         $this->getView()->assign('links', $links);
         $this->getView()->assign('tags', $tags);
         $this->getView()->assign('types', $types);
-
         return true;
     }
 

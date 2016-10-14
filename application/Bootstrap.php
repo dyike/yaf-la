@@ -25,7 +25,7 @@ class Bootstrap extends Yaf_Bootstrap_Abstract
         $db_config['username'] = $this->arrConfig->db->username;
         $db_config['password'] = $this->arrConfig->db->password;
         $db_config['database'] = $this->arrConfig->db->database;
-        $db_config['log'] = $this->arrConfig->db->log;
+        $db_config['pconnect'] = $this->arrConfig->db->pconnect;
         Yaf_Registry::set('db', new Db($db_config));
     }
 

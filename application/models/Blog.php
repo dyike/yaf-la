@@ -23,7 +23,8 @@ class BlogModel
     {
         $key = cachekey(__FUNCTION__, $blogId);
         $data = $this->redis->hget(__CLASS__, $key);
-        if (is_bool($data)) {
+
+        if ($data == "") {
             $sql = "select * from blog where id = {$blogId}";
             $data = $this->db->getOne($sql);
             $this->redis->hset(__CLASS__, $key, $data);
@@ -32,7 +33,6 @@ class BlogModel
         if ($content) {
             $data['content'] = $this->blogContent($blogId);
         }
-
         return $data;
     }
 

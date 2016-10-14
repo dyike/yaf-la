@@ -52,10 +52,11 @@ class BlogTypeModel
     {
         $key = cachekey(__FUNCTION__);
         $data = $this->redis->hget(__CLASS__, $key);
-        if (is_bool($data)) {
+        if (is_array($data)) {
             $data = [];
             $sql = "select * from blogtype";
             $res = $this->db->getAll($sql);
+
             foreach ($res as $value) {
                 $data[$value['id']]['name'] = $value['name'];
                 $data[$value['id']]['topid'] = $value['topid'];
@@ -63,6 +64,9 @@ class BlogTypeModel
             $this->redis->hset(__CLASS__, $key, $data);
         }
         $res[0] = $data[$typeId];
+        echo "<pre>";
+
+
         if ($res[0]['topid'] > 0) {
             $res[1] = $data[$res[0]['topid']];
         }
