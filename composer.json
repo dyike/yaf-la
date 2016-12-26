@@ -1,0 +1,18 @@
+{
+    "require": {
+        "illuminate/database": "*",
+        "illuminate/events": "*",
+        "symfony/var-dumper": "^3.2",
+        "symfony/console": "^3.2",
+        "nesbot/carbon": "*",
+        "twig/twig": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\Models\\": "application/models"
+        },
+        "classmap": [
+            "command/","application/models/"
+        ]
+    }
+}

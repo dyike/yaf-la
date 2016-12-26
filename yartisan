@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+<?php
+require_once dirname(__FILE__).DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
+
+use Symfony\Component\Console\Application;
+use Command\GenerateModelCommand;
+use Command\GenerateControllerCommand;
+use Command\GeneratePluginCommand;
+
+define('APP_PATH', dirname(__FILE__));
+define('MODEL_PATH',APP_PATH.'/application/models');
+define('TEMPLATE_PATH',APP_PATH.'/command/templates');
+
+$application = new Application();
+
+// ... register commands
+$application->add(new GenerateControllerCommand());
+$application->add(new GenerateModelCommand());
+$application->add(new GeneratePluginCommand());
+$application->run();
