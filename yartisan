@@ -6,6 +6,7 @@ use Symfony\Component\Console\Application;
 use Command\GenerateModelCommand;
 use Command\GenerateControllerCommand;
 use Command\GeneratePluginCommand;
+use Command\GenerateMigrationCommand;
 
 define('APP_PATH', dirname(__FILE__));
 define('MODEL_PATH',APP_PATH.'/application/models');
@@ -17,4 +18,5 @@ $application = new Application();
 $application->add(new GenerateControllerCommand());
 $application->add(new GenerateModelCommand());
 $application->add(new GeneratePluginCommand());
+$application->add(new GenerateMigrationCommand);
 $application->run();

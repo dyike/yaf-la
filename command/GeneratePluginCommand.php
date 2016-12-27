@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Yaf\Exception;
 
 class GeneratePluginCommand extends Command
@@ -18,7 +19,7 @@ class GeneratePluginCommand extends Command
     private $classNameSuffix = 'Plugin';
     private $fileNameSuffix = '';
     private $name = 'add:plugin';
-    private $description = 'Creates new plugin.';
+    private $description = 'Adds new plugin.';
     private $help = "This command allows you to create plugins...";
     private $usage = 'Sample';
 
@@ -37,36 +38,39 @@ class GeneratePluginCommand extends Command
         $arg = $input->getArgument('plugin');
         $this->outputFileName = $this->outputDir . ucfirst($arg) . $this->fileNameSuffix . '.php';
         $template = require_once $this->templatePath;
-        $data = sprintf($template, ucfirst($arg).$this->classNameSuffix,ucfirst($arg).$this->classNameSuffix);
+        $data = sprintf($template, ucfirst($arg).$this->classNameSuffix, ucfirst($arg).$this->classNameSuffix);
 
-        $output->writeln([
-            ucfirst($arg) . ' ' . $this->type . ' Adding',
-            '============',
+        $style = new OutputFormatterStyle('red', 'yellow', ['bold', 'blink']);
+        $output->getFormatter()->setStyle('fire', $style);
+
+        $output->writeln(['<info>' .
+            ucfirst($arg) . ' ' . $this->type . ' Adding' . '</info>',
+            "\n<fire>=============================</fire>\n",
         ]);
 
         if (file_exists($this->outputDir)) {
             if (!is_writable($this->outputDir)) {
-                throw new Exception('File can\'t writable');
+                throw new Exception('<error>File can\'t writable</error>');
             }
 
             if (file_exists($this->outputFileName)) {
                 $helper = $this->getHelper('question');
-                $question = new ConfirmationQuestion('File exists,Continue with this action,overwrite it?(y|n)?', false);
+                $question = new ConfirmationQuestion('<question>File exists,Continue with this action,overwrite it?(y|n)?</question>', false);
 
                 if (!$helper->ask($input, $output, $question)) {
                     return;
                 } else {
                     file_put_contents($this->outputFileName, $data);
-                    $output->writeln('Congratulation!');
-                    $output->writeln('Overwrite a ' . ucfirst($arg) . ' ' . $this->type . ' successfully');
+                    $output->writeln('<comment>Congratulation!</comment>');
+                    $output->writeln('<fg=green;options=bold>Overwrite a ' . ucfirst($arg) . ' ' . $this->type . ' successfully</>');
                     return;
                 }
             }
             file_put_contents($this->outputFileName, $data);
-            $output->writeln('Congratulation!');
-            $output->writeln('Create a ' . ucfirst($arg) . ' ' . $this->type . ' successfully');
+            $output->writeln('<comment>Congratulation!</comment>');
+            $output->writeln('<fg=green;options=bold>Add a ' . ucfirst($arg) . ' ' . $this->type . ' successfully</>');
         } else {
-            throw new Exception('Dirctory not exists!' . $this->outputDir);
+            throw new Exception('<error>Dirctory not exists!</error>' . $this->outputDir);
         }
     }
 }

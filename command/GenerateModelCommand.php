@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Yaf\Exception;
 
 class GenerateModelCommand extends Command
@@ -40,34 +41,37 @@ class GenerateModelCommand extends Command
         $template = require_once $this->templatePath;
         $data = sprintf($template, ucfirst($arg).$this->classNameSuffix);
 
-        $output->writeln([
-            ucfirst($arg) . ' ' . $this->type . " is creating",
-            "\n============\n",
+        $style = new OutputFormatterStyle('red', 'yellow', ['bold', 'blink']);
+        $output->getFormatter()->setStyle('fire', $style);
+
+        $output->writeln(['<info>' .
+            ucfirst($arg) . ' ' . $this->type . ' Adding' . '</info>',
+            "\n<fire>=============================</fire>\n",
         ]);
 
         if (file_exists($this->outputDir)) {
             if (!is_writable($this->outputDir)) {
-                throw new Exception('File can\'t writable');
+                throw new Exception('<error>File can\'t writable</error>');
             }
             // 处理重复创建的
             if (file_exists($this->outputFileName)) {
                 $helper = $this->getHelper('question');
-                $question = new ConfirmationQuestion('File exists,Continue with this action,overwrite it?(y|n)?', false);
+                $question = new ConfirmationQuestion('<question>File exists,Continue with this action,overwrite it?(y|n)?</question>', false);
 
                 if (!$helper->ask($input, $output, $question)) {
                     return;
                 } else {
                     file_put_contents($this->outputFileName, $data);
-                    $output->writeln("\033[40m\033[32m Congratulation! \033[0m \n");
-                    $output->writeln('Overwrite a ' . ucfirst($arg) . ' ' . $this->type . " successfully\n");
+                    $output->writeln("<comment>Congratulation!</comment>");
+                    $output->writeln('<fg=green;options=bold>Overwrite a ' . ucfirst($arg) . ' ' . $this->type . " successfully</>");
                     return;
                 }
             }
             file_put_contents($this->outputFileName, $data);
-            $output->writeln("Congratulation!\n");
-            $output->writeln('Add a ' . ucfirst($arg) . ' ' . $this->type . " successfully\n");
+            $output->writeln("<comment>Congratulation!</comment>");
+            $output->writeln('<fg=green;options=bold>Add a ' . ucfirst($arg) . ' ' . $this->type . " successfully</>");
         } else {
-            throw new Exception('Dirctory not exists!' . $this->outputDir . "\n");
+            throw new Exception('<error>Dirctory not exists!' . $this->outputDir . '</error>');
         }
     }
 
