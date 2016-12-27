@@ -89,7 +89,6 @@ class GenerateControllerCommand extends Command
             if (!is_writable(dirname($this->outputFileName))) {
                 throw new Exception('<error>File can\'t writable</error>');
             }
-
             if (file_exists($this->outputFileName)) {
                 $helper = $this->getHelper('question');
                 $question = new ConfirmationQuestion('<question>File exists,Continue with this action,overwrite it?(y|n)?</question>', false);
