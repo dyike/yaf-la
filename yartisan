@@ -3,20 +3,27 @@
 require dirname(__FILE__).DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
 
 use Symfony\Component\Console\Application;
+use Illuminate\Database\Console\Migrations;
+use Illuminate\Filesystem\Filesystem;
+use Pimple\Container;
+
 use Command\GenerateModelCommand;
 use Command\GenerateControllerCommand;
 use Command\GeneratePluginCommand;
 use Command\GenerateMigrationCommand;
+use Command\GenerateMigrateCommand;
 
 define('APP_PATH', dirname(__FILE__));
 define('MODEL_PATH',APP_PATH.'/application/models');
 define('TEMPLATE_PATH',APP_PATH.'/command/templates');
 
-$application = new Application();
 
+$application = new Application();
 // ... register commands
 $application->add(new GenerateControllerCommand());
 $application->add(new GenerateModelCommand());
 $application->add(new GeneratePluginCommand());
 $application->add(new GenerateMigrationCommand);
+$application->add(new GenerateMigrateCommand);
+
 $application->run();

@@ -21,8 +21,8 @@ class GenerateMigrationCommand extends Command
     private $fileNameSuffix = '';
     private $exampleName = 'example';
     private $name = 'add:migration';
-    private $description = 'Create new table.';
-    private $help = "This command allows you to create table...";
+    private $description = 'Add new migration.';
+    private $help = "This command allows you to create migration record...";
     private $usage = 'like create_users_table --create=users';
 
     protected function configure()

@@ -2,10 +2,11 @@
     "require": {
         "illuminate/database": "*",
         "illuminate/events": "*",
+        "illuminate/filesystem": "*",
+        "pimple/pimple": "*",
         "symfony/var-dumper": "^3.2",
         "symfony/console": "^3.2",
-        "nesbot/carbon": "*",
-        "twig/twig": "*"
+        "nesbot/carbon": "*"
     },
     "autoload": {
         "psr-4": {
